@@ -169,60 +169,61 @@
     prevBtn.onclick = () => showQuestion(--current);
     nextBtn.onclick = () => showQuestion(++current);
 
-    submitBtn.onclick = e => {
-      e.preventDefault();
-      let correct = 0;
-      const flaggedList = [];
+    submitBtn.textContent = 'Check Answer';
 
-      quizData.forEach((q, i) => {
-        const qDiv = document.getElementById(`q${i}`);
-        const header = qDiv.querySelector('.question-header');
-        const inputs = qDiv.querySelectorAll(`input[name=q${i}]`);
-        const selected = Array.from(inputs).filter(input => input.checked).map(input => input.value);
-        const isCorrect = q.answer.length === selected.length && q.answer.every(ans => selected.includes(ans));
+function gradeQuestion(i) {
+  const q = quizData[i];
+  const qDiv = document.getElementById(`q${i}`);
+  const header = qDiv.querySelector('.question-header');
+  const inputs = qDiv.querySelectorAll(`input[name=q${i}]`);
+  const selected = Array.from(inputs)
+    .filter(input => input.checked)
+    .map(input => input.value);
 
-        header.classList.remove('correct-answer', 'incorrect-answer');
-        header.classList.add(isCorrect ? 'correct-answer' : 'incorrect-answer');
-        qDiv.style.display = 'block';
-        qDiv.classList.add('submitted');
+  const isCorrect =
+    q.answer.length === selected.length &&
+    q.answer.every(ans => selected.includes(ans));
 
-        inputs.forEach(input => {
-          const label = input.parentElement;
-          label.classList.remove('correct', 'incorrect', 'selected-answer');
+  header.classList.remove('correct-answer', 'incorrect-answer');
+  header.classList.add(isCorrect ? 'correct-answer' : 'incorrect-answer');
 
-          if (input.checked) {
-            label.classList.add('selected-answer');
-            if (q.answer.includes(input.value)) {
-              label.classList.add('correct');
-            } else {
-              label.classList.add('incorrect');
-            }
-          } else if (q.answer.includes(input.value)) {
-            label.classList.add('correct');
-          }
-        });
+  inputs.forEach(input => {
+    const label = input.parentElement;
+    label.classList.remove('correct', 'incorrect', 'selected-answer');
 
-        if (isCorrect) correct++;
-        if (q.flagged) {
-          const flagLabel = document.createElement('div');
-          flagLabel.className = 'flagged-question-label';
-          flagLabel.textContent = 'This question was flagged for review';
-          header.appendChild(flagLabel);
-          flaggedList.push(`${i + 1}. ${q.question}`);
-        }
-      });
-
-      results.textContent = `You got ${correct} out of ${quizData.length} correct (${Math.round((correct / quizData.length) * 100)}%)`;
-
-      if (flaggedList.length > 0) {
-        flaggedResults.innerHTML =
-          `<h3>Flagged Questions for Review:</h3><ul>` +
-          flaggedList.map(q => `<li>${q}</li>`).join('') +
-          `</ul>`;
+    if (input.checked) {
+      label.classList.add('selected-answer');
+      if (q.answer.includes(input.value)) {
+        label.classList.add('correct');
       } else {
-        flaggedResults.innerHTML = '';
+        label.classList.add('incorrect');
       }
-    };
+    } else if (q.answer.includes(input.value)) {
+      label.classList.add('correct');
+    }
+
+    input.disabled = true;
+  });
+
+  let feedback = qDiv.querySelector('.answer-feedback');
+  if (!feedback) {
+    feedback = document.createElement('div');
+    feedback.className = 'answer-feedback';
+    qDiv.appendChild(feedback);
+  }
+
+  feedback.innerHTML = `
+    <strong>${isCorrect ? 'Correct!' : 'Incorrect.'}</strong><br>
+    Correct answer: ${q.answer.join(', ')}
+  `;
+
+  qDiv.classList.add('submitted');
+}
+
+submitBtn.onclick = e => {
+  e.preventDefault();
+  gradeQuestion(current);
+};
   </script>
 </body>
 </html>
